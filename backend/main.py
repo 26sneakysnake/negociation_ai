@@ -338,7 +338,45 @@ async def handle_control_message(session_id: str, message: dict):
     try:
         msg_type = message.get("type")
 
-        if msg_type == "auto_pilot":
+        if msg_type == "transcript":
+            # Handle transcript from client (simulated or real)
+            transcript_data = message.get("data", {})
+
+            # Create LiveAnalysis from transcript
+            from backend.models import LiveAnalysis
+
+            analysis = LiveAnalysis(
+                session_id=session_id,
+                transcript=transcript_data.get("transcript", ""),
+                speaker=transcript_data.get("speaker", "user"),
+                timestamp=transcript_data.get("timestamp", 0),
+                emotion=transcript_data.get("emotion", "neutral"),
+                confidence_level=transcript_data.get("confidence_level", 0.8),
+                conversation_phase=transcript_data.get("conversation_phase", "negotiation"),
+                detected_patterns=transcript_data.get("detected_patterns", []),
+                manipulation_score=transcript_data.get("manipulation_score", 0.0),
+                opportunity_score=transcript_data.get("opportunity_score", 0.0),
+                hesitation_markers=transcript_data.get("hesitation_markers", []),
+                power_dynamics=transcript_data.get("power_dynamics", 0.5),
+                stalemate_risk=transcript_data.get("stalemate_risk", 0.0)
+            )
+
+            logger.info(f"📝 Received transcript from {analysis.speaker}: {analysis.transcript[:50]}...")
+
+            # Generate suggestion using AI engine
+            ai_engine = app.state.ai_engine
+            suggestion = await ai_engine.analyze_and_suggest(analysis)
+
+            # Send suggestion back
+            await connection_manager.send_message(session_id, {
+                "type": "suggestion",
+                "data": suggestion.model_dump(),
+                "session_id": session_id
+            })
+
+            logger.info(f"💡 Sent suggestion: {suggestion.text[:50]}...")
+
+        elif msg_type == "auto_pilot":
             action = message.get("action")
 
             if action == "activate":
@@ -358,7 +396,7 @@ async def handle_control_message(session_id: str, message: dict):
                 })
 
     except Exception as e:
-        logger.error(f"Error handling control message: {e}")
+        logger.error(f"Error handling control message: {e}", exc_info=True)
 
 
 if __name__ == "__main__":

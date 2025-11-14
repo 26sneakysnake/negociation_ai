@@ -18,6 +18,21 @@ let ws = null;
 let reconnectAttempts = 0;
 let sessionId = null;
 let isConnected = false;
+let simulationInterval = null;
+
+// Test phrases for simulation
+const TEST_PHRASES = [
+  { speaker: 'counterparty', text: "Je peux vous offrir 10,000€ pour ce contrat.", emotion: 'neutral' },
+  { speaker: 'counterparty', text: "C'est mon offre finale, prenez-le ou laissez-le.", emotion: 'firm' },
+  { speaker: 'counterparty', text: "Cette offre n'est valable que jusqu'à demain.", emotion: 'urgent' },
+  { speaker: 'user', text: "Je dois en discuter avec mon équipe.", emotion: 'hesitant' },
+  { speaker: 'counterparty', text: "Il faut décider maintenant.", emotion: 'pushy' },
+  { speaker: 'user', text: "Nos tarifs habituels sont bien supérieurs.", emotion: 'confident' },
+  { speaker: 'counterparty', text: "Mon patron n'acceptera jamais ces conditions.", emotion: 'firm' },
+  { speaker: 'user', text: "Qu'est-ce que vous proposez comme alternative ?", emotion: 'curious' }
+];
+
+let currentPhraseIndex = 0;
 
 // Create overlay UI
 function createOverlay() {
@@ -51,7 +66,10 @@ function createOverlay() {
           <span class="negotiai-status-dot"></span>
           <span class="negotiai-status-text">Disconnected</span>
         </div>
-        <button id="negotiai-connect" class="negotiai-btn-primary">Connect</button>
+        <div style="display: flex; gap: 8px;">
+          <button id="negotiai-connect" class="negotiai-btn-primary">Connect</button>
+          <button id="negotiai-simulate" class="negotiai-btn-secondary" disabled>Start Sim</button>
+        </div>
       </div>
 
       <div class="negotiai-suggestions" id="negotiai-suggestions">
@@ -81,6 +99,7 @@ function setupEventListeners() {
   const toggleBtn = document.getElementById('negotiai-toggle');
   const closeBtn = document.getElementById('negotiai-close');
   const connectBtn = document.getElementById('negotiai-connect');
+  const simulateBtn = document.getElementById('negotiai-simulate');
   const overlay = document.getElementById('negotiai-overlay');
 
   if (toggleBtn) {
@@ -101,6 +120,16 @@ function setupEventListeners() {
         disconnect();
       } else {
         await connect();
+      }
+    });
+  }
+
+  if (simulateBtn) {
+    simulateBtn.addEventListener('click', () => {
+      if (simulationInterval) {
+        stopSimulation();
+      } else {
+        startSimulation();
       }
     });
   }
@@ -237,6 +266,7 @@ function connectWebSocket(sessId) {
     reconnectAttempts = 0;
     updateStatus('connected', 'Connected');
     updateConnectButton(true);
+    updateSimulateButton(true);
   };
 
   ws.onmessage = (event) => {
@@ -272,6 +302,7 @@ function connectWebSocket(sessId) {
 
 // Disconnect
 function disconnect() {
+  stopSimulation();
   if (ws) {
     ws.close();
     ws = null;
@@ -279,6 +310,80 @@ function disconnect() {
   isConnected = false;
   updateStatus('disconnected', 'Disconnected');
   updateConnectButton(false);
+  updateSimulateButton(false);
+}
+
+// Start simulation
+function startSimulation() {
+  if (!isConnected || !ws) {
+    showNotification('Connect to backend first!', 'warning');
+    return;
+  }
+
+  console.log('🎬 Starting simulation...');
+  currentPhraseIndex = 0;
+
+  // Send first phrase immediately
+  sendNextPhrase();
+
+  // Then send phrases every 5 seconds
+  simulationInterval = setInterval(() => {
+    sendNextPhrase();
+  }, 5000);
+
+  updateSimulateButton(true, true);
+  showNotification('Simulation started - sending test phrases', 'info');
+}
+
+// Stop simulation
+function stopSimulation() {
+  if (simulationInterval) {
+    clearInterval(simulationInterval);
+    simulationInterval = null;
+    updateSimulateButton(true, false);
+    console.log('⏹️ Simulation stopped');
+  }
+}
+
+// Send next test phrase
+function sendNextPhrase() {
+  if (!ws || ws.readyState !== WebSocket.OPEN) {
+    stopSimulation();
+    return;
+  }
+
+  const phrase = TEST_PHRASES[currentPhraseIndex];
+
+  // Create transcript message
+  const transcript = {
+    transcript: phrase.text,
+    speaker: phrase.speaker,
+    timestamp: Date.now() / 1000,
+    emotion: phrase.emotion,
+    confidence_level: 0.85,
+    conversation_phase: 'negotiation',
+    detected_patterns: [],
+    manipulation_score: 0,
+    opportunity_score: 0,
+    hesitation_markers: [],
+    power_dynamics: 0.5,
+    stalemate_risk: 0.3,
+    session_id: sessionId
+  };
+
+  // Send to backend
+  ws.send(JSON.stringify({
+    type: 'transcript',
+    data: transcript
+  }));
+
+  console.log(`📤 Sent phrase ${currentPhraseIndex + 1}/${TEST_PHRASES.length}:`, phrase.text);
+
+  // Display locally immediately
+  displayTranscript(transcript);
+
+  // Move to next phrase
+  currentPhraseIndex = (currentPhraseIndex + 1) % TEST_PHRASES.length;
 }
 
 // Handle WebSocket messages
@@ -405,6 +510,16 @@ function updateConnectButton(connected) {
   if (btn) {
     btn.textContent = connected ? 'Disconnect' : 'Connect';
     btn.className = connected ? 'negotiai-btn-danger' : 'negotiai-btn-primary';
+  }
+}
+
+// Update simulate button
+function updateSimulateButton(enabled, running = false) {
+  const btn = document.getElementById('negotiai-simulate');
+  if (btn) {
+    btn.disabled = !enabled;
+    btn.textContent = running ? 'Stop Sim' : 'Start Sim';
+    btn.className = running ? 'negotiai-btn-danger' : 'negotiai-btn-secondary';
   }
 }
 
