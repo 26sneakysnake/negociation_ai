@@ -7,8 +7,27 @@ L'extension NegotiAI Coach peut maintenant **capturer et transcrire l'audio en t
 ## 🔧 Technologies Utilisées
 
 1. **Chrome tabCapture API** : Capture l'audio de l'onglet Google Meet
-2. **Web Speech API** : Transcription vocale automatique en français
-3. **WebSocket** : Envoi des transcriptions au backend pour analyse IA
+2. **Offscreen Document (Manifest V3)** : Permet l'accès aux Web APIs dans une extension
+3. **Web Speech API** : Transcription vocale automatique en français
+4. **WebSocket** : Envoi des transcriptions au backend pour analyse IA
+
+### Architecture Technique
+
+```
+Background Service Worker (background.js)
+    ↓ crée
+Offscreen Document (offscreen.html + offscreen.js)
+    ↓ a accès à
+Web Speech API (SpeechRecognition)
+    ↓ transcrit
+Audio capturé via tabCapture
+    ↓ envoie
+Transcription → Background → Content Script → Overlay
+```
+
+**Pourquoi un Offscreen Document ?**
+
+Les service workers (background.js en Manifest V3) n'ont **pas accès** aux Web APIs comme `SpeechRecognition` ou l'objet `window`. L'offscreen document est une page HTML invisible qui tourne en arrière-plan et a accès à toutes les Web APIs.
 
 ## 🚀 Comment Utiliser
 
