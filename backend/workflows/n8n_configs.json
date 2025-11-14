@@ -1,0 +1,280 @@
+{
+  "workflows": [
+    {
+      "name": "NegotiAI Audio Processing Pipeline",
+      "description": "Main workflow for processing audio chunks and generating suggestions",
+      "active": true,
+      "nodes": [
+        {
+          "id": "webhook_audio",
+          "type": "n8n-nodes-base.webhook",
+          "name": "Audio Chunk Webhook",
+          "parameters": {
+            "path": "/negotiai/audio-chunk",
+            "method": "POST",
+            "responseMode": "responseNode"
+          },
+          "position": [250, 300]
+        },
+        {
+          "id": "elevenlabs_transcribe",
+          "type": "n8n-nodes-base.httpRequest",
+          "name": "ElevenLabs Transcription",
+          "parameters": {
+            "url": "https://api.elevenlabs.io/v1/speech-to-text",
+            "method": "POST",
+            "authentication": "headerAuth",
+            "options": {
+              "response": {
+                "fullResponse": false
+              }
+            }
+          },
+          "position": [450, 300]
+        },
+        {
+          "id": "pattern_detection",
+          "type": "n8n-nodes-base.code",
+          "name": "Pattern Detection",
+          "parameters": {
+            "language": "python",
+            "code": "# Pattern detection logic\ntranscript = input_data['transcript']\npatterns = detect_patterns(transcript)\nreturn {'patterns': patterns}"
+          },
+          "position": [650, 300]
+        },
+        {
+          "id": "qdrant_search",
+          "type": "n8n-nodes-base.httpRequest",
+          "name": "Qdrant Context Search",
+          "parameters": {
+            "url": "http://qdrant:6333/collections/negotiation_context/points/search",
+            "method": "POST",
+            "bodyParameters": {
+              "vector": "={{$json.embedding}}",
+              "limit": 5
+            }
+          },
+          "position": [850, 300]
+        },
+        {
+          "id": "mistral_generate",
+          "type": "n8n-nodes-base.httpRequest",
+          "name": "Mistral Suggestion Generation",
+          "parameters": {
+            "url": "https://api.mistral.ai/v1/chat/completions",
+            "method": "POST",
+            "authentication": "headerAuth",
+            "bodyParameters": {
+              "model": "mistral-large-latest",
+              "messages": [
+                {
+                  "role": "user",
+                  "content": "={{$json.prompt}}"
+                }
+              ]
+            }
+          },
+          "position": [1050, 300]
+        },
+        {
+          "id": "websocket_send",
+          "type": "n8n-nodes-base.httpRequest",
+          "name": "Send to WebSocket",
+          "parameters": {
+            "url": "http://backend:8000/ws/broadcast",
+            "method": "POST",
+            "bodyParameters": {
+              "type": "suggestion",
+              "data": "={{$json.suggestion}}"
+            }
+          },
+          "position": [1250, 300]
+        },
+        {
+          "id": "respond",
+          "type": "n8n-nodes-base.respondToWebhook",
+          "name": "Response",
+          "parameters": {
+            "respondWith": "json",
+            "responseBody": "={{$json}}"
+          },
+          "position": [1450, 300]
+        }
+      ],
+      "connections": {
+        "webhook_audio": {
+          "main": [[{"node": "elevenlabs_transcribe"}]]
+        },
+        "elevenlabs_transcribe": {
+          "main": [[{"node": "pattern_detection"}]]
+        },
+        "pattern_detection": {
+          "main": [[{"node": "qdrant_search"}]]
+        },
+        "qdrant_search": {
+          "main": [[{"node": "mistral_generate"}]]
+        },
+        "mistral_generate": {
+          "main": [[{"node": "websocket_send"}]]
+        },
+        "websocket_send": {
+          "main": [[{"node": "respond"}]]
+        }
+      }
+    },
+    {
+      "name": "Auto-Pilot Response Generator",
+      "description": "Workflow for generating automated responses in auto-pilot mode",
+      "active": true,
+      "nodes": [
+        {
+          "id": "webhook_autopilot",
+          "type": "n8n-nodes-base.webhook",
+          "name": "Auto-Pilot Trigger",
+          "parameters": {
+            "path": "/negotiai/autopilot",
+            "method": "POST"
+          },
+          "position": [250, 500]
+        },
+        {
+          "id": "check_boundaries",
+          "type": "n8n-nodes-base.code",
+          "name": "Check Red Lines",
+          "parameters": {
+            "language": "python",
+            "code": "# Check if response violates red lines\nscript = input_data['script']\nred_lines = input_data['red_lines']\nviolates = check_red_lines(script, red_lines)\nreturn {'violates': violates, 'script': script}"
+          },
+          "position": [450, 500]
+        },
+        {
+          "id": "mistral_script",
+          "type": "n8n-nodes-base.httpRequest",
+          "name": "Generate Script",
+          "parameters": {
+            "url": "https://api.mistral.ai/v1/chat/completions",
+            "method": "POST"
+          },
+          "position": [650, 500]
+        },
+        {
+          "id": "elevenlabs_tts",
+          "type": "n8n-nodes-base.httpRequest",
+          "name": "ElevenLabs TTS",
+          "parameters": {
+            "url": "https://api.elevenlabs.io/v1/text-to-speech",
+            "method": "POST"
+          },
+          "position": [850, 500]
+        },
+        {
+          "id": "send_audio",
+          "type": "n8n-nodes-base.httpRequest",
+          "name": "Send Audio Response",
+          "parameters": {
+            "url": "http://backend:8000/ws/broadcast",
+            "method": "POST"
+          },
+          "position": [1050, 500]
+        }
+      ],
+      "connections": {
+        "webhook_autopilot": {
+          "main": [[{"node": "check_boundaries"}]]
+        },
+        "check_boundaries": {
+          "main": [[{"node": "mistral_script"}]]
+        },
+        "mistral_script": {
+          "main": [[{"node": "elevenlabs_tts"}]]
+        },
+        "elevenlabs_tts": {
+          "main": [[{"node": "send_audio"}]]
+        }
+      }
+    },
+    {
+      "name": "Knowledge Base Enrichment",
+      "description": "Continuously enrich knowledge base from successful negotiations",
+      "active": false,
+      "nodes": [
+        {
+          "id": "schedule",
+          "type": "n8n-nodes-base.scheduleTrigger",
+          "name": "Daily Trigger",
+          "parameters": {
+            "rule": {
+              "interval": [{"field": "days", "value": 1}]
+            }
+          },
+          "position": [250, 700]
+        },
+        {
+          "id": "fetch_sessions",
+          "type": "n8n-nodes-base.httpRequest",
+          "name": "Fetch Completed Sessions",
+          "parameters": {
+            "url": "http://backend:8000/api/sessions/completed",
+            "method": "GET"
+          },
+          "position": [450, 700]
+        },
+        {
+          "id": "analyze_patterns",
+          "type": "n8n-nodes-base.code",
+          "name": "Extract Successful Patterns",
+          "parameters": {
+            "language": "python",
+            "code": "# Analyze successful negotiations\nsessions = input_data['sessions']\npatterns = extract_patterns(sessions)\nreturn {'patterns': patterns}"
+          },
+          "position": [650, 700]
+        },
+        {
+          "id": "update_qdrant",
+          "type": "n8n-nodes-base.httpRequest",
+          "name": "Update Knowledge Base",
+          "parameters": {
+            "url": "http://qdrant:6333/collections/negotiation_knowledge/points",
+            "method": "PUT"
+          },
+          "position": [850, 700]
+        }
+      ],
+      "connections": {
+        "schedule": {
+          "main": [[{"node": "fetch_sessions"}]]
+        },
+        "fetch_sessions": {
+          "main": [[{"node": "analyze_patterns"}]]
+        },
+        "analyze_patterns": {
+          "main": [[{"node": "update_qdrant"}]]
+        }
+      }
+    }
+  ],
+  "credentials": {
+    "elevenlabs": {
+      "name": "ElevenLabs API",
+      "type": "headerAuth",
+      "data": {
+        "name": "xi-api-key",
+        "value": "${ELEVENLABS_API_KEY}"
+      }
+    },
+    "mistral": {
+      "name": "Mistral AI API",
+      "type": "headerAuth",
+      "data": {
+        "name": "Authorization",
+        "value": "Bearer ${MISTRAL_API_KEY}"
+      }
+    }
+  },
+  "settings": {
+    "timezone": "Europe/Paris",
+    "saveExecutionProgress": true,
+    "saveDataSuccessExecution": "all",
+    "saveDataErrorExecution": "all"
+  }
+}

@@ -1,0 +1,97 @@
+version: '3.8'
+
+services:
+  # Qdrant Vector Database
+  qdrant:
+    image: qdrant/qdrant:latest
+    container_name: negotiai-qdrant
+    ports:
+      - "6333:6333"
+      - "6334:6334"
+    volumes:
+      - qdrant_storage:/qdrant/storage
+    environment:
+      - QDRANT__SERVICE__GRPC_PORT=6334
+    networks:
+      - negotiai-network
+    restart: unless-stopped
+
+  # Backend FastAPI Server
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    container_name: negotiai-backend
+    ports:
+      - "8000:8000"
+    environment:
+      - ELEVENLABS_API_KEY=${ELEVENLABS_API_KEY}
+      - MISTRAL_API_KEY=${MISTRAL_API_KEY}
+      - QDRANT_URL=http://qdrant:6333
+      - QDRANT_API_KEY=${QDRANT_API_KEY}
+      - GOOGLE_CLOUD_KEY=${GOOGLE_CLOUD_KEY}
+      - N8N_WEBHOOK_URL=http://n8n:5678/webhook
+      - LOVABLE_PROJECT_ID=${LOVABLE_PROJECT_ID}
+      - FAL_API_KEY=${FAL_API_KEY}
+      - HOST=0.0.0.0
+      - PORT=8000
+      - DEBUG=True
+    volumes:
+      - ./backend:/app/backend
+    depends_on:
+      - qdrant
+    networks:
+      - negotiai-network
+    restart: unless-stopped
+    command: uvicorn backend.main:app --host 0.0.0.0 --port 8000 --reload
+
+  # Frontend React App
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    container_name: negotiai-frontend
+    ports:
+      - "3000:3000"
+    environment:
+      - REACT_APP_API_URL=http://localhost:8000
+      - REACT_APP_WS_PORT=8000
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    depends_on:
+      - backend
+    networks:
+      - negotiai-network
+    restart: unless-stopped
+    command: npm start
+
+  # N8N Workflow Automation
+  n8n:
+    image: n8nio/n8n:latest
+    container_name: negotiai-n8n
+    ports:
+      - "5678:5678"
+    environment:
+      - N8N_BASIC_AUTH_ACTIVE=true
+      - N8N_BASIC_AUTH_USER=admin
+      - N8N_BASIC_AUTH_PASSWORD=admin
+      - WEBHOOK_URL=http://localhost:5678/
+      - GENERIC_TIMEZONE=Europe/Paris
+      - N8N_ENCRYPTION_KEY=${N8N_ENCRYPTION_KEY:-changeme}
+    volumes:
+      - n8n_data:/home/node/.n8n
+      - ./backend/workflows:/workflows
+    networks:
+      - negotiai-network
+    restart: unless-stopped
+
+volumes:
+  qdrant_storage:
+    driver: local
+  n8n_data:
+    driver: local
+
+networks:
+  negotiai-network:
+    driver: bridge

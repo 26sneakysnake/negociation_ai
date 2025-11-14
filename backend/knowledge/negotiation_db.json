@@ -1,0 +1,300 @@
+{
+  "frameworks": {
+    "harvard": {
+      "name": "Harvard Negotiation Method",
+      "principles": [
+        {
+          "id": "separate_people",
+          "title": "Separate people from the problem",
+          "description": "Focus on the issue, not personal attacks",
+          "tactics": ["active_listening", "empathy", "reframing"]
+        },
+        {
+          "id": "focus_interests",
+          "title": "Focus on interests, not positions",
+          "description": "Understand underlying needs and motivations",
+          "tactics": ["why_questions", "interest_mapping", "creative_options"]
+        },
+        {
+          "id": "objective_criteria",
+          "title": "Use objective criteria",
+          "description": "Base agreements on fair standards",
+          "tactics": ["market_data", "industry_standards", "precedents"]
+        },
+        {
+          "id": "expand_pie",
+          "title": "Expand the pie before dividing",
+          "description": "Create value before claiming it",
+          "tactics": ["brainstorming", "package_deals", "contingent_agreements"]
+        }
+      ]
+    },
+    "voss": {
+      "name": "Chris Voss FBI Tactics",
+      "techniques": [
+        {
+          "id": "mirroring",
+          "title": "Mirroring",
+          "description": "Repeat the last 3 words to encourage elaboration",
+          "example": "Them: 'The price is too high.' You: 'Too high?'"
+        },
+        {
+          "id": "labeling",
+          "title": "Labeling emotions",
+          "description": "Name the emotion you detect",
+          "example": "It seems like you're concerned about the timeline"
+        },
+        {
+          "id": "calibrated_questions",
+          "title": "Calibrated questions",
+          "description": "Ask 'how' and 'what' questions to give control",
+          "examples": [
+            "How am I supposed to do that?",
+            "What about this doesn't work for you?",
+            "How can we solve this together?"
+          ]
+        },
+        {
+          "id": "tactical_empathy",
+          "title": "Tactical empathy",
+          "description": "Understand and acknowledge their position",
+          "example": "I understand this is a significant investment for you"
+        },
+        {
+          "id": "no_oriented_questions",
+          "title": "No-oriented questions",
+          "description": "Make it easy to say no to feel in control",
+          "example": "Is now a bad time to talk?"
+        }
+      ]
+    }
+  },
+  "critical_patterns": {
+    "manipulation": [
+      {
+        "id": "false_urgency",
+        "name": "False urgency",
+        "keywords": ["offre expire", "dernier jour", "maintenant ou jamais", "Stock limité"],
+        "description": "Creating artificial time pressure",
+        "counter": "Expose the tactic politely and ignore the urgency",
+        "response_template": "I appreciate the offer, but I need time to make the right decision. If this expires, I'm comfortable with that.",
+        "auto_pilot_script": "Je comprends votre position sur les délais, mais je préfère prendre le temps nécessaire pour une décision réfléchie."
+      },
+      {
+        "id": "anchoring",
+        "name": "Aggressive anchoring",
+        "pattern": "normalement.*mais pour vous",
+        "description": "Setting extreme initial position",
+        "counter": "Ignore the anchor completely, set your own",
+        "response_template": "Let me share what makes sense from our perspective...",
+        "auto_pilot_script": "Laissez-moi vous expliquer notre vision de la valeur pour ce projet."
+      },
+      {
+        "id": "good_cop_bad_cop",
+        "name": "Good cop / Bad cop",
+        "indicators": ["mon manager", "la direction", "je dois demander"],
+        "description": "Creating artificial authority barriers",
+        "counter": "Escalate to actual decision maker",
+        "response_template": "I'd prefer to speak directly with the decision maker.",
+        "auto_pilot_script": "Je pense qu'il serait plus efficace de discuter directement avec la personne qui a l'autorité finale."
+      },
+      {
+        "id": "nibbling",
+        "name": "Nibbling",
+        "indicators": ["au fait", "j'ai oublié", "encore une petite chose"],
+        "description": "Adding requests after agreement",
+        "counter": "Firm boundary - reopen entire negotiation",
+        "response_template": "If we're reopening terms, I have additional items to discuss as well.",
+        "auto_pilot_script": "Si nous modifions l'accord, je souhaiterais également revoir certains points de notre côté."
+      }
+    ],
+    "objections": [
+      {
+        "id": "price_too_high",
+        "triggers": ["trop cher", "hors budget", "prix élevé"],
+        "type": "price_objection",
+        "counters": [
+          {
+            "tactic": "value_justification",
+            "template": "Let me break down the ROI...",
+            "questions": [
+              "What's the cost of not solving this problem?",
+              "How much time/money does this save you?"
+            ]
+          },
+          {
+            "tactic": "comparison",
+            "template": "Compared to alternatives, here's our unique value...",
+            "focus": "total_cost_of_ownership"
+          },
+          {
+            "tactic": "unbundling",
+            "template": "What if we start with the core package?",
+            "approach": "modular_pricing"
+          }
+        ]
+      },
+      {
+        "id": "need_approval",
+        "triggers": ["dois demander", "mon manager", "comité de décision"],
+        "type": "authority_objection",
+        "counters": [
+          {
+            "tactic": "qualify_early",
+            "question": "Who else needs to be involved in this decision?"
+          },
+          {
+            "tactic": "trial_close",
+            "template": "If you had the authority, would this work for you?"
+          },
+          {
+            "tactic": "champion_building",
+            "template": "How can I help you present this to your team?"
+          }
+        ]
+      },
+      {
+        "id": "competitor_cheaper",
+        "triggers": ["concurrent moins cher", "offre concurrente", "autre proposition"],
+        "type": "competition_objection",
+        "counters": [
+          {
+            "tactic": "differentiation",
+            "focus": "unique_value_props"
+          },
+          {
+            "tactic": "total_cost",
+            "template": "Let's compare total cost over 12 months including support, training..."
+          },
+          {
+            "tactic": "risk_analysis",
+            "template": "What's the cost of choosing the wrong solution?"
+          }
+        ]
+      }
+    ],
+    "opportunities": [
+      {
+        "id": "hesitation",
+        "markers": ["peut-être", "je ne sais pas", "il faudrait que", "probablement"],
+        "description": "Speaker shows uncertainty",
+        "action": "gentle_push",
+        "tactics": [
+          "assumptive_close",
+          "alternative_choice",
+          "trial_period"
+        ],
+        "response_template": "It sounds like you're interested but have some reservations. What would make you feel confident moving forward?",
+        "auto_pilot_script": "Je sens que cela vous intéresse. Qu'est-ce qui vous aiderait à prendre une décision sereine?"
+      },
+      {
+        "id": "budget_available",
+        "markers": ["budget prévu", "fonds alloués", "enveloppe"],
+        "description": "Budget confirmation",
+        "action": "confirm_and_close",
+        "response_template": "Great, let's ensure we maximize that budget for the best outcome."
+      },
+      {
+        "id": "pain_point_mentioned",
+        "markers": ["problème", "difficulté", "challenge", "perte de temps"],
+        "description": "Problem acknowledgment",
+        "action": "amplify_pain",
+        "tactics": [
+          "cost_of_inaction",
+          "timeline_pressure",
+          "solution_fit"
+        ],
+        "response_template": "That sounds frustrating. How long has this been impacting your operations?"
+      }
+    ],
+    "stalemate": [
+      {
+        "id": "repetition",
+        "detection": "same_argument_3_times",
+        "description": "Circular discussion",
+        "break_tactics": [
+          "introduce_new_variable",
+          "reframe_problem",
+          "take_break",
+          "escalate_decision"
+        ],
+        "auto_pilot_script": "Je remarque que nous tournons en rond. Explorons une nouvelle approche ensemble."
+      },
+      {
+        "id": "silent_stalemate",
+        "detection": "long_pause_both_sides",
+        "description": "Neither party advancing",
+        "break_tactics": [
+          "summarize_progress",
+          "identify_gap",
+          "propose_creative_solution"
+        ],
+        "auto_pilot_script": "Récapitulons ce sur quoi nous sommes d'accord et identifions le point de blocage principal."
+      }
+    ]
+  },
+  "closing_techniques": [
+    {
+      "id": "assumptive_close",
+      "name": "Assumptive close",
+      "description": "Act as if agreement is reached",
+      "example": "When should we schedule the kickoff meeting?",
+      "when_to_use": "Strong buying signals detected"
+    },
+    {
+      "id": "alternative_choice",
+      "name": "Alternative choice close",
+      "description": "Offer two positive options",
+      "example": "Would you prefer the monthly or annual plan?",
+      "when_to_use": "Prospect is interested but hesitant"
+    },
+    {
+      "id": "summary_close",
+      "name": "Summary close",
+      "description": "Recap benefits and ask for commitment",
+      "example": "So we've agreed on X, Y, Z. Shall we move forward?",
+      "when_to_use": "After long negotiation to crystalize agreement"
+    },
+    {
+      "id": "urgency_close",
+      "name": "Legitimate urgency",
+      "description": "Real deadline or scarcity",
+      "example": "The price increases next quarter due to new features",
+      "when_to_use": "Genuine time-sensitive factor exists"
+    },
+    {
+      "id": "trial_close",
+      "name": "Trial close",
+      "description": "Test readiness without full commitment",
+      "example": "If we could solve the integration concern, would you be ready?",
+      "when_to_use": "Gauging readiness throughout conversation"
+    }
+  ],
+  "power_phrases": [
+    "That's interesting, tell me more...",
+    "Help me understand your thinking here...",
+    "What would make this a win for both of us?",
+    "How do you see this working ideally?",
+    "What if we could...?",
+    "I'm curious about...",
+    "From your perspective, what's most important?",
+    "Let's explore options together"
+  ],
+  "red_flags": [
+    {
+      "pattern": "take it or leave it",
+      "risk": "hardball_tactic",
+      "response": "call_bluff_professionally"
+    },
+    {
+      "pattern": "this is standard",
+      "risk": "false_constraint",
+      "response": "challenge_assumption"
+    },
+    {
+      "pattern": "everyone else accepts",
+      "risk": "social_proof_manipulation",
+      "response": "focus_on_your_needs"
+    }
+  ]
+}

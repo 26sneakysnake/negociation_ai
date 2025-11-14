@@ -1,0 +1,169 @@
+{
+  "scenario": {
+    "name": "SaaS B2B Contract Negotiation",
+    "description": "Annual recurring revenue contract negotiation for enterprise software",
+    "duration_minutes": 5,
+    "complexity": "medium"
+  },
+  "negotiator": {
+    "role": "Sales Representative",
+    "company": "TechSolutions SaaS",
+    "product": "Enterprise Analytics Platform",
+    "objectives": {
+      "target_outcome": "50K EUR ARR with 3-year commitment",
+      "minimum_acceptable": "35K EUR ARR with 1-year commitment",
+      "batna": "Walk away and pursue competitor deal worth 30K EUR"
+    },
+    "constraints": {
+      "red_lines": [
+        "No payment terms beyond 60 days",
+        "No exclusivity clause without premium",
+        "Minimum 20% margin requirement"
+      ],
+      "concession_budget": [
+        "Can offer 10% discount for 3-year commitment",
+        "Can include basic training package",
+        "Can reduce implementation time by 2 weeks"
+      ]
+    }
+  },
+  "counterparty": {
+    "role": "Procurement Manager",
+    "company": "GlobalCorp Industries",
+    "objectives": {
+      "target": "30K EUR ARR with flexibility to cancel",
+      "constraints": [
+        "Budget cap at 40K EUR",
+        "Needs 90-day payment terms",
+        "Requires comprehensive training"
+      ]
+    },
+    "tactics": [
+      "Will anchor low at 25K EUR",
+      "Will use false urgency (competing vendor deadline)",
+      "Will request additional features post-agreement (nibbling)"
+    ]
+  },
+  "timeline": [
+    {
+      "time": "00:00",
+      "phase": "opening",
+      "event": "Introduction and rapport building",
+      "expected_action": "Establish positive tone, understand priorities"
+    },
+    {
+      "time": "00:30",
+      "phase": "exploration",
+      "event": "Counterparty anchors at 25K EUR",
+      "pattern": "anchoring",
+      "ai_suggestion": "Ignore anchor, focus on value proposition",
+      "optimal_response": "Let me explain the ROI you'll achieve..."
+    },
+    {
+      "time": "01:00",
+      "phase": "exploration",
+      "event": "False urgency: 'Competing vendor needs decision by Friday'",
+      "pattern": "false_urgency",
+      "ai_suggestion": "Call bluff professionally, maintain timeline control",
+      "optimal_response": "I understand timing is important. Let's ensure you make the right decision for your needs."
+    },
+    {
+      "time": "01:30",
+      "phase": "bargaining",
+      "event": "Price objection: 'Too expensive for our budget'",
+      "pattern": "price_objection",
+      "ai_suggestion": "Focus on total cost of ownership and ROI",
+      "optimal_response": "Let's look at the value over 3 years and time savings..."
+    },
+    {
+      "time": "02:00",
+      "phase": "bargaining",
+      "event": "Stalemate: Repeated positions, no movement",
+      "pattern": "stalemate",
+      "ai_suggestion": "Introduce new variable (training package)",
+      "auto_pilot_trigger": true,
+      "optimal_response": "Let me propose something different: what if we include premium training?"
+    },
+    {
+      "time": "02:30",
+      "phase": "bargaining",
+      "event": "Hesitation signals: 'Maybe... I'm not sure...'",
+      "pattern": "hesitation",
+      "ai_suggestion": "Trial close to gauge readiness",
+      "optimal_response": "It sounds like you see value. What would help you feel confident moving forward?"
+    },
+    {
+      "time": "03:00",
+      "phase": "closing",
+      "event": "Negotiation settling at 42K EUR ARR, 2-year term",
+      "ai_suggestion": "Assumptive close",
+      "optimal_response": "Great! Let's finalize the details. When can we schedule implementation?"
+    },
+    {
+      "time": "03:30",
+      "phase": "closing",
+      "event": "Nibbling attempt: 'Oh, can we also get the mobile app included?'",
+      "pattern": "nibbling",
+      "ai_suggestion": "Reopen entire negotiation if adding terms",
+      "auto_pilot_trigger": true,
+      "optimal_response": "If we're modifying the agreement, I'd like to revisit the pricing structure as well."
+    },
+    {
+      "time": "04:00",
+      "phase": "closing",
+      "event": "Final agreement: 45K EUR ARR, 2-year, mobile app included, 60-day terms",
+      "outcome": "SUCCESS",
+      "analysis": {
+        "vs_target": "90% of target (45K vs 50K)",
+        "vs_minimum": "129% above minimum (45K vs 35K)",
+        "margin": "25% (above red line)",
+        "tactics_used": [
+          "Value-based selling",
+          "Called false urgency bluff",
+          "Introduced creative variable (training)",
+          "Counter-nibbling successfully"
+        ],
+        "ai_assists": 8,
+        "autopilot_interventions": 2
+      }
+    }
+  ],
+  "test_phrases": {
+    "manipulation_detection": [
+      "C'est une offre qui expire aujourd'hui",
+      "Tous nos autres clients acceptent ces conditions",
+      "Mon patron ne va jamais accepter ça",
+      "Au fait, j'ai oublié de mentionner..."
+    ],
+    "opportunity_detection": [
+      "Je ne sais pas trop...",
+      "Peut-être que ça pourrait marcher",
+      "On a un budget prévu pour ça",
+      "C'est vraiment un problème pour nous"
+    ],
+    "objection_patterns": [
+      "C'est trop cher pour nous",
+      "Je dois en parler à mon manager",
+      "Un concurrent propose moins cher",
+      "On n'a pas le budget cette année"
+    ]
+  },
+  "success_criteria": {
+    "minimum": {
+      "arr_value": 35000,
+      "term_length_months": 12,
+      "margin_percentage": 20
+    },
+    "target": {
+      "arr_value": 50000,
+      "term_length_months": 36,
+      "margin_percentage": 25
+    },
+    "kpis": {
+      "ai_suggestion_accuracy": 0.80,
+      "pattern_detection_rate": 0.90,
+      "autopilot_intervention_success": 0.85,
+      "final_outcome_vs_target": 0.85
+    }
+  }
+}
