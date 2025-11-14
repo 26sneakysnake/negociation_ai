@@ -105,29 +105,11 @@ async function startAudioCapture(tabId) {
     // Ensure offscreen document exists
     await setupOffscreenDocument();
 
-    // Capture tab audio
-    const stream = await new Promise((resolve, reject) => {
-      chrome.tabCapture.capture({
-        audio: true,
-        video: false
-      }, (stream) => {
-        if (chrome.runtime.lastError) {
-          reject(new Error(chrome.runtime.lastError.message));
-        } else if (!stream) {
-          reject(new Error('Failed to capture tab audio'));
-        } else {
-          resolve(stream);
-        }
-      });
-    });
-
-    console.log('✅ Audio stream captured');
-
-    // Store stream
-    activeCaptures.set(tabId, { stream, tabId });
+    // Mark this tab as actively capturing
+    activeCaptures.set(tabId, { tabId });
 
     // Send message to offscreen document to start recognition
-    // Note: We can't pass the MediaStream object, offscreen will use getUserMedia
+    // The offscreen document will use getUserMedia to capture the microphone
     await chrome.runtime.sendMessage({
       action: 'start-recognition'
     });
@@ -154,11 +136,6 @@ async function stopAudioCapture(tabId) {
       });
     } catch (e) {
       console.error('Error stopping recognition:', e);
-    }
-
-    // Stop stream
-    if (capture.stream) {
-      capture.stream.getTracks().forEach(track => track.stop());
     }
 
     activeCaptures.delete(tabId);
