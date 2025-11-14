@@ -22,7 +22,51 @@ AI-powered real-time negotiation assistant for business negotiations.
 
 ### Quick Start
 
+#### Automated Setup (Recommended)
+
+**Windows 11 + PowerShell:**
+```powershell
+.\scripts\setup_windows.ps1
+python start_simple.py
+```
+
+**Windows 11 + Batch (if PowerShell blocked):**
+```cmd
+.\scripts\setup_windows.bat
+python start_simple.py
+```
+
+**Linux / macOS:**
 ```bash
+./scripts/quick_setup.sh
+python start_simple.py
+```
+
+All setup scripts automatically:
+- Create Python virtual environment
+- Install dependencies
+- Setup .env file
+- Verify configuration
+
+#### VS Code Workflow (Windows 11)
+
+1. Open project in VS Code: `code .`
+2. Press **F5** to start debugging backend
+3. Or use **Ctrl+Shift+B** → "Backend: Start Server"
+
+See [WINDOWS_VSCODE_GUIDE.md](WINDOWS_VSCODE_GUIDE.md) for complete VS Code setup.
+
+#### Manual Setup
+
+```bash
+# Create virtual environment
+python -m venv venv
+
+# Activate (Windows)
+.\venv\Scripts\activate
+# Or (Linux/Mac)
+source venv/bin/activate
+
 # Install dependencies
 pip install -r requirements.txt
 cd frontend && npm install
@@ -34,12 +78,8 @@ cp .env.example .env
 # Load knowledge base
 python backend/knowledge/loader.py
 
-# Start services with Docker
-docker-compose up -d
-
-# Or start manually
-uvicorn backend.main:app --reload --host 0.0.0.0 --port 8000 &
-cd frontend && npm start
+# Start services
+python start_simple.py
 ```
 
 ### Access Points
@@ -47,6 +87,23 @@ cd frontend && npm start
 - API: http://localhost:8000
 - API Docs: http://localhost:8000/docs
 - N8N: http://localhost:5678
+
+### Browser Extension (Overlay Mode)
+
+The browser extension displays AI suggestions directly on video call pages (Google Meet, Zoom, Teams).
+
+**Installation:**
+1. Open Chrome: `chrome://extensions/`
+2. Enable "Developer mode"
+3. Click "Load unpacked"
+4. Select: `negociation_ai/browser-extension`
+5. Join a video call - the overlay activates automatically
+
+**Features:**
+- Draggable, minimizable overlay
+- Real-time suggestions
+- Live transcript
+- Auto-connects to backend via WebSocket
 
 ### Architecture
 ```
@@ -61,6 +118,23 @@ Run the SaaS B2B contract negotiation demo:
 ```bash
 python demo/run_scenario.py
 ```
+
+### Requirements
+- **Python**: 3.11+ (tested on 3.13.1)
+- **Node.js**: 16+ (for frontend, optional)
+- **VS Code**: Latest version (recommended for Windows 11)
+- **Browser**: Chrome or Firefox (for extension)
+
+### Documentation
+- [WINDOWS_VSCODE_GUIDE.md](WINDOWS_VSCODE_GUIDE.md) - Complete Windows 11 + VS Code setup (570 lines)
+- [VENV_GUIDE.md](VENV_GUIDE.md) - Virtual environment comprehensive guide
+- [INSTALLATION_SIMPLE.md](INSTALLATION_SIMPLE.md) - Detailed installation instructions
+- [API Documentation](http://localhost:8000/docs) - Interactive API docs (when running)
+
+### Platform Support
+- **Windows 11**: Full support with automated PowerShell/Batch setup + VS Code integration
+- **Linux**: Bash setup script with venv auto-management
+- **macOS**: Compatible (use Linux setup script)
 
 ### Development Time: 6 hours
 Built for Pioneers AI Lab Hackathon at Station F.
