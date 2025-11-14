@@ -6,7 +6,10 @@ __pycache__/
 .Python
 env/
 venv/
+.venv/
 ENV/
+env.bak/
+venv.bak/
 build/
 develop-eggs/
 dist/
@@ -22,6 +25,8 @@ wheels/
 *.egg-info/
 .installed.cfg
 *.egg
+pip-log.txt
+pip-delete-this-directory.txt
 
 # Node
 node_modules/

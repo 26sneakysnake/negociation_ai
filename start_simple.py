@@ -2,6 +2,7 @@
 """
 Simple startup script for NegotiAI Coach
 No Docker required - runs everything in one process
+Includes automatic virtual environment management
 """
 
 import sys
@@ -43,6 +44,84 @@ def print_info(text):
     print(f"{Colors.OKCYAN}→ {text}{Colors.ENDC}")
 
 
+def get_venv_path():
+    """Get virtual environment path"""
+    return Path("venv")
+
+
+def is_in_venv():
+    """Check if running inside virtual environment"""
+    return hasattr(sys, 'real_prefix') or (
+        hasattr(sys, 'base_prefix') and sys.base_prefix != sys.prefix
+    )
+
+
+def create_venv():
+    """Create virtual environment if it doesn't exist"""
+    venv_path = get_venv_path()
+
+    if venv_path.exists():
+        print_success(f"Virtual environment exists: {venv_path}")
+        return True
+
+    print_info("Creating virtual environment...")
+    try:
+        subprocess.run([sys.executable, "-m", "venv", str(venv_path)], check=True)
+        print_success(f"Virtual environment created: {venv_path}")
+        return True
+    except subprocess.CalledProcessError as e:
+        print_error(f"Failed to create virtual environment: {e}")
+        return False
+
+
+def get_venv_python():
+    """Get path to Python in virtual environment"""
+    venv_path = get_venv_path()
+
+    if platform.system() == "Windows":
+        return venv_path / "Scripts" / "python.exe"
+    else:
+        return venv_path / "bin" / "python"
+
+
+def get_venv_pip():
+    """Get path to pip in virtual environment"""
+    venv_path = get_venv_path()
+
+    if platform.system() == "Windows":
+        return venv_path / "Scripts" / "pip.exe"
+    else:
+        return venv_path / "bin" / "pip"
+
+
+def activate_venv_instructions():
+    """Print instructions to activate virtual environment"""
+    venv_path = get_venv_path()
+
+    print_info("Pour activer l'environnement virtuel manuellement :")
+    if platform.system() == "Windows":
+        print(f"  {venv_path}\\Scripts\\activate")
+    else:
+        print(f"  source {venv_path}/bin/activate")
+
+
+def install_dependencies_in_venv():
+    """Install dependencies in virtual environment"""
+    pip_path = get_venv_pip()
+
+    print_info("Installing dependencies in virtual environment...")
+    try:
+        subprocess.run(
+            [str(pip_path), "install", "-r", "requirements.txt"],
+            check=True
+        )
+        print_success("Dependencies installed")
+        return True
+    except subprocess.CalledProcessError as e:
+        print_error(f"Failed to install dependencies: {e}")
+        return False
+
+
 def check_python_version():
     """Check if Python version is compatible"""
     version = sys.version_info
@@ -56,14 +135,18 @@ def check_python_version():
 
 def check_dependencies():
     """Check if required packages are installed"""
-    try:
-        import fastapi
-        import uvicorn
-        print_success("Core dependencies installed")
-        return True
-    except ImportError as e:
-        print_error(f"Missing dependencies: {e}")
-        print_info("Run: pip install -r requirements.txt")
+    # If in venv, use venv's Python to check
+    if is_in_venv():
+        try:
+            import fastapi
+            import uvicorn
+            print_success("Core dependencies installed")
+            return True
+        except ImportError as e:
+            print_error(f"Missing dependencies: {e}")
+            return False
+    else:
+        # Not in venv, will create one and install there
         return False
 
 
@@ -108,9 +191,12 @@ def start_backend():
         return None
 
     try:
+        # Use venv Python if available, otherwise system Python
+        python_exe = get_venv_python() if get_venv_path().exists() else sys.executable
+
         # Start uvicorn
         cmd = [
-            sys.executable, "-m", "uvicorn",
+            str(python_exe), "-m", "uvicorn",
             "backend.main:app",
             "--host", "0.0.0.0",
             "--port", "8000",
@@ -210,11 +296,39 @@ def main():
     if not check_python_version():
         sys.exit(1)
 
+    # Virtual environment setup
+    print_header("Virtual Environment Setup")
+
+    if is_in_venv():
+        print_success("Already running in virtual environment")
+    else:
+        print_info("Not in virtual environment - setting up...")
+
+        if not create_venv():
+            print_error("Failed to create virtual environment")
+            response = input("Continue without venv? (y/n): ")
+            if response.lower() != 'y':
+                sys.exit(1)
+        else:
+            # Install dependencies in venv
+            if not install_dependencies_in_venv():
+                print_error("Failed to install dependencies")
+                sys.exit(1)
+
+            # Restart script in venv
+            print_info("Restarting in virtual environment...")
+            venv_python = get_venv_python()
+            os.execv(str(venv_python), [str(venv_python), __file__])
+
+    # Check dependencies (should be installed in venv now)
     if not check_dependencies():
+        print_error("Dependencies not installed")
         response = input("\nInstall dependencies now? (y/n): ")
         if response.lower() == 'y':
-            print_info("Installing dependencies...")
-            subprocess.run([sys.executable, "-m", "pip", "install", "-r", "requirements.txt"])
+            if is_in_venv():
+                subprocess.run([sys.executable, "-m", "pip", "install", "-r", "requirements.txt"])
+            else:
+                subprocess.run([sys.executable, "-m", "pip", "install", "--user", "-r", "requirements.txt"])
         else:
             sys.exit(1)
 
@@ -254,6 +368,10 @@ def main():
     print("4. Load unpacked: browser-extension/")
     print("5. Join a video call (Google Meet, Zoom, Teams)")
     print("6. Extension will auto-activate!")
+
+    if is_in_venv():
+        print(f"\n{Colors.OKGREEN}✓ Running in virtual environment{Colors.ENDC}")
+        activate_venv_instructions()
 
     # Keep running
     print(f"\n{Colors.WARNING}Press Ctrl+C to stop all services{Colors.ENDC}\n")

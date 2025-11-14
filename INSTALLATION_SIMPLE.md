@@ -10,36 +10,66 @@ Guide pour démarrer **sans Docker** et avec un minimum de configuration.
 
 ## 🚀 Installation en 5 minutes
 
-### Étape 1 : Installation Python
+### Méthode A : Setup Automatique (Recommandé)
+
+```bash
+# 1. Clonez le repo
+git clone [votre-repo]
+cd negociation_ai
+
+# 2. Exécutez le script de setup
+./scripts/quick_setup.sh
+
+# Le script va :
+# - Vérifier Python 3.11+
+# - Créer un environnement virtuel
+# - Installer toutes les dépendances
+# - Créer le fichier .env
+```
+
+### Méthode B : Setup Manuel
+
+#### Étape 1 : Installation Python
 
 ```bash
 # Vérifiez votre version Python
 python --version  # Doit afficher 3.11 ou supérieur
-
-# Si Python 3.13
-python3.13 --version
 ```
 
-### Étape 2 : Clonez le repo
+#### Étape 2 : Clonez le repo
 
 ```bash
 git clone [votre-repo]
 cd negociation_ai
 ```
 
-### Étape 3 : Installez les dépendances
+#### Étape 3 : Créez l'environnement virtuel
 
 ```bash
-# Installation automatique
-pip install -r requirements.txt
+# Créer l'environnement virtuel
+python -m venv venv
 
-# OU avec pip3 si nécessaire
-pip3 install -r requirements.txt
+# Activer l'environnement virtuel
+# Sur Linux/Mac :
+source venv/bin/activate
+
+# Sur Windows :
+venv\Scripts\activate
 ```
 
-**Note**: Si vous avez des erreurs, c'est normal ! Le script de démarrage les gérera.
+Vous devriez voir `(venv)` au début de votre prompt.
 
-### Étape 4 : Configuration des clés API
+#### Étape 4 : Installez les dépendances
+
+```bash
+# Mise à jour de pip
+pip install --upgrade pip
+
+# Installation des dépendances
+pip install -r requirements.txt
+```
+
+#### Étape 5 : Configuration des clés API
 
 ```bash
 # Copiez le fichier d'exemple
@@ -61,19 +91,25 @@ QDRANT_API_KEY=  # Laissez vide pour Qdrant local
 GOOGLE_CLOUD_KEY=  # Backup STT (optionnel)
 ```
 
-### Étape 5 : Démarrez le backend
+### Étape 6 : Démarrez le backend
 
 ```bash
-# Option A: Script simple (recommandé)
+# Option A: Script simple (recommandé - gère le venv automatiquement)
 python start_simple.py
 
-# Option B: Manuel
+# Option B: Manuel (dans le venv activé)
 uvicorn backend.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
+**Note** : Le script `start_simple.py` :
+- Détecte si vous êtes dans un venv
+- Crée un venv automatiquement si besoin
+- Installe les dépendances
+- Redémarre dans le venv
+
 ✅ Le backend démarre sur http://localhost:8000
 
-### Étape 6 : Installez l'extension navigateur
+### Étape 7 : Installez l'extension navigateur
 
 #### Chrome / Edge :
 
@@ -131,10 +167,39 @@ L'extension se connecte au backend et commence à afficher les suggestions !
 
 ## 🔧 Dépannage
 
+### Environnement virtuel
+
+**Problème** : "Module not found" même après installation
+
+```bash
+# Vérifiez que vous êtes dans le venv
+which python  # Devrait pointer vers venv/bin/python
+
+# Si pas dans venv, activez-le
+source venv/bin/activate  # Linux/Mac
+venv\Scripts\activate     # Windows
+
+# Réinstallez les dépendances
+pip install --upgrade -r requirements.txt
+```
+
+**Problème** : Erreur lors de la création du venv
+
+```bash
+# Sur Ubuntu/Debian
+sudo apt-get install python3-venv
+
+# Sur Fedora/RHEL
+sudo dnf install python3-venv
+
+# Puis recréez
+python -m venv venv
+```
+
 ### Python : "Module not found"
 
 ```bash
-# Réinstallez les dépendances
+# TOUJOURS dans le venv activé !
 pip install --upgrade -r requirements.txt
 ```
 
@@ -272,7 +337,9 @@ app.add_middleware(
 ## 📝 Checklist avant de commencer
 
 - [ ] Python 3.11+ installé
-- [ ] Dependencies installées (`pip install -r requirements.txt`)
+- [ ] Environnement virtuel créé (`venv/`)
+- [ ] Environnement virtuel activé (`(venv)` dans le prompt)
+- [ ] Dependencies installées dans le venv
 - [ ] Fichier `.env` créé avec les clés API
 - [ ] Backend démarre sans erreur
 - [ ] Extension navigateur installée
