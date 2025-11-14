@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NegotiAI Coach</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      width: 300px;
+      padding: 16px;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+      background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 100%);
+      color: #ffffff;
+    }
+
+    h1 {
+      font-size: 18px;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .icon {
+      font-size: 24px;
+    }
+
+    p {
+      font-size: 13px;
+      color: #ccc;
+      margin-bottom: 16px;
+      line-height: 1.5;
+    }
+
+    .status {
+      padding: 12px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      margin-bottom: 16px;
+    }
+
+    .status-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+      font-size: 12px;
+    }
+
+    .status-item:last-child {
+      margin-bottom: 0;
+    }
+
+    .status-label {
+      color: #888;
+    }
+
+    .status-value {
+      font-weight: 600;
+    }
+
+    .status-dot {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      margin-right: 4px;
+    }
+
+    .status-dot.connected {
+      background: #10b981;
+      box-shadow: 0 0 8px rgba(16, 185, 129, 0.5);
+    }
+
+    .status-dot.disconnected {
+      background: #666;
+    }
+
+    .btn {
+      width: 100%;
+      padding: 10px;
+      border: none;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      margin-bottom: 8px;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    }
+
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.1);
+      color: white;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.15);
+    }
+
+    .footer {
+      margin-top: 16px;
+      padding-top: 16px;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+      font-size: 11px;
+      color: #666;
+      text-align: center;
+    }
+
+    .link {
+      color: #667eea;
+      text-decoration: none;
+    }
+
+    .link:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <h1>
+    <span class="icon">🎯</span>
+    NegotiAI Coach
+  </h1>
+
+  <p>AI-powered real-time negotiation assistant</p>
+
+  <div class="status">
+    <div class="status-item">
+      <span class="status-label">Backend</span>
+      <span class="status-value" id="backend-status">
+        <span class="status-dot disconnected" id="backend-dot"></span>
+        <span id="backend-text">Checking...</span>
+      </span>
+    </div>
+    <div class="status-item">
+      <span class="status-label">Overlay</span>
+      <span class="status-value" id="overlay-status">Active on video calls</span>
+    </div>
+  </div>
+
+  <button class="btn btn-primary" id="open-app">
+    Open Full App
+  </button>
+
+  <button class="btn btn-secondary" id="toggle-overlay">
+    Toggle Overlay
+  </button>
+
+  <div class="footer">
+    <a href="http://localhost:8000/docs" target="_blank" class="link">API Docs</a> •
+    <a href="https://github.com" target="_blank" class="link">Help</a>
+  </div>
+
+  <script src="scripts/popup.js"></script>
+</body>
+</html>
