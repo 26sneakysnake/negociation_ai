@@ -243,6 +243,11 @@ async def websocket_endpoint(websocket: WebSocket, session_id: str):
             try:
                 data = await websocket.receive()
 
+                # Check for disconnect message
+                if data.get("type") == "websocket.disconnect":
+                    logger.info(f"📡 Client disconnected: {session_id}")
+                    break
+
                 if "bytes" in data:
                     # Audio chunk
                     audio_chunk = data["bytes"]
@@ -253,13 +258,23 @@ async def websocket_endpoint(websocket: WebSocket, session_id: str):
                     message = json.loads(data["text"])
                     await handle_control_message(session_id, message)
 
+            except WebSocketDisconnect:
+                # Client disconnected
+                logger.info(f"📡 WebSocket disconnect signal: {session_id}")
+                break
             except Exception as e:
                 logger.error(f"Error processing websocket data: {e}")
-                await connection_manager.send_message(session_id, {
-                    "type": "alert",
-                    "data": {"error": str(e), "message": "Processing error (continuing...)"},
-                    "session_id": session_id
-                })
+                # Send error but continue
+                try:
+                    await connection_manager.send_message(session_id, {
+                        "type": "error",
+                        "data": {"message": "Processing error occurred"},
+                        "session_id": session_id
+                    })
+                except:
+                    # Can't send message, connection probably closed
+                    logger.warning(f"Cannot send error message, closing connection: {session_id}")
+                    break
 
     except WebSocketDisconnect:
         connection_manager.disconnect(session_id)
