@@ -1,0 +1,101 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Python: Backend FastAPI",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "uvicorn",
+      "args": [
+        "backend.main:app",
+        "--reload",
+        "--host",
+        "0.0.0.0",
+        "--port",
+        "8000"
+      ],
+      "jinja": true,
+      "justMyCode": false,
+      "console": "integratedTerminal",
+      "env": {
+        "PYTHONPATH": "${workspaceFolder}"
+      },
+      "presentation": {
+        "hidden": false,
+        "group": "backend",
+        "order": 1
+      }
+    },
+    {
+      "name": "Python: Simple Startup",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/start_simple.py",
+      "console": "integratedTerminal",
+      "justMyCode": false,
+      "env": {
+        "PYTHONPATH": "${workspaceFolder}"
+      },
+      "presentation": {
+        "hidden": false,
+        "group": "startup",
+        "order": 1
+      }
+    },
+    {
+      "name": "Python: Demo Scenario",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/demo/run_scenario.py",
+      "console": "integratedTerminal",
+      "justMyCode": false,
+      "env": {
+        "PYTHONPATH": "${workspaceFolder}"
+      },
+      "presentation": {
+        "hidden": false,
+        "group": "demo",
+        "order": 1
+      }
+    },
+    {
+      "name": "Python: Load Knowledge Base",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/backend/knowledge/loader.py",
+      "console": "integratedTerminal",
+      "justMyCode": false,
+      "env": {
+        "PYTHONPATH": "${workspaceFolder}"
+      },
+      "presentation": {
+        "hidden": false,
+        "group": "utils",
+        "order": 1
+      }
+    },
+    {
+      "name": "Python: Current File",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${file}",
+      "console": "integratedTerminal",
+      "justMyCode": false,
+      "env": {
+        "PYTHONPATH": "${workspaceFolder}"
+      }
+    }
+  ],
+  "compounds": [
+    {
+      "name": "Full Stack (Backend + Frontend)",
+      "configurations": ["Python: Backend FastAPI"],
+      "presentation": {
+        "hidden": false,
+        "group": "compound",
+        "order": 1
+      },
+      "stopAll": true
+    }
+  ]
+}

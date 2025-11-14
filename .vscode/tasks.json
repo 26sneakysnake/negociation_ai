@@ -1,0 +1,199 @@
+{
+  // Use IntelliSense to learn about possible attributes.
+  // Hover to view descriptions of existing attributes.
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Setup: Create Virtual Environment",
+      "type": "shell",
+      "command": "python",
+      "args": ["-m", "venv", "venv"],
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      }
+    },
+    {
+      "label": "Setup: Install Dependencies",
+      "type": "shell",
+      "windows": {
+        "command": "${workspaceFolder}/venv/Scripts/python.exe"
+      },
+      "linux": {
+        "command": "${workspaceFolder}/venv/bin/python"
+      },
+      "osx": {
+        "command": "${workspaceFolder}/venv/bin/python"
+      },
+      "args": ["-m", "pip", "install", "-r", "requirements.txt"],
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      }
+    },
+    {
+      "label": "Setup: Quick Setup (Windows)",
+      "type": "shell",
+      "command": "powershell",
+      "args": ["-ExecutionPolicy", "Bypass", "-File", "${workspaceFolder}/scripts/setup_windows.ps1"],
+      "problemMatcher": [],
+      "windows": {
+        "command": "powershell"
+      },
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      }
+    },
+    {
+      "label": "Backend: Start Server",
+      "type": "shell",
+      "command": "python",
+      "args": ["start_simple.py"],
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "focus": true
+      },
+      "isBackground": true,
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      }
+    },
+    {
+      "label": "Backend: Start with Uvicorn",
+      "type": "shell",
+      "windows": {
+        "command": "${workspaceFolder}/venv/Scripts/python.exe"
+      },
+      "linux": {
+        "command": "${workspaceFolder}/venv/bin/python"
+      },
+      "args": [
+        "-m",
+        "uvicorn",
+        "backend.main:app",
+        "--reload",
+        "--host",
+        "0.0.0.0",
+        "--port",
+        "8000"
+      ],
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated"
+      },
+      "isBackground": true
+    },
+    {
+      "label": "Frontend: Install Dependencies",
+      "type": "shell",
+      "command": "npm",
+      "args": ["install"],
+      "options": {
+        "cwd": "${workspaceFolder}/frontend"
+      },
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always"
+      }
+    },
+    {
+      "label": "Frontend: Start Dev Server",
+      "type": "shell",
+      "command": "npm",
+      "args": ["start"],
+      "options": {
+        "cwd": "${workspaceFolder}/frontend"
+      },
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated"
+      },
+      "isBackground": true
+    },
+    {
+      "label": "Knowledge: Load Database",
+      "type": "shell",
+      "command": "python",
+      "args": ["backend/knowledge/loader.py"],
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always"
+      }
+    },
+    {
+      "label": "Demo: Run Scenario",
+      "type": "shell",
+      "command": "python",
+      "args": ["demo/run_scenario.py"],
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated"
+      }
+    },
+    {
+      "label": "Test: Run All Tests",
+      "type": "shell",
+      "command": "python",
+      "args": ["-m", "pytest", "-v"],
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always"
+      },
+      "group": {
+        "kind": "test",
+        "isDefault": true
+      }
+    },
+    {
+      "label": "Docker: Build and Start",
+      "type": "shell",
+      "command": "docker-compose",
+      "args": ["up", "--build", "-d"],
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always"
+      }
+    },
+    {
+      "label": "Docker: Stop",
+      "type": "shell",
+      "command": "docker-compose",
+      "args": ["down"],
+      "problemMatcher": []
+    },
+    {
+      "label": "Lint: Check Code",
+      "type": "shell",
+      "command": "python",
+      "args": ["-m", "flake8", "backend/"],
+      "problemMatcher": {
+        "owner": "python",
+        "fileLocation": ["relative", "${workspaceFolder}"],
+        "pattern": {
+          "regexp": "^(.+):(\\d+):(\\d+):\\s+(\\w+\\d+)\\s+(.+)$",
+          "file": 1,
+          "line": 2,
+          "column": 3,
+          "code": 4,
+          "message": 5
+        }
+      }
+    },
+    {
+      "label": "Format: Black",
+      "type": "shell",
+      "command": "python",
+      "args": ["-m", "black", "backend/"],
+      "problemMatcher": []
+    }
+  ]
+}
