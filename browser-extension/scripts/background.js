@@ -5,7 +5,8 @@
 console.log('🎯 NegotiAI Coach: Background service worker loaded');
 
 // State
-let activeCaptures = new Map(); // tabId -> { stream, recognition }
+let activeCaptures = new Map(); // tabId -> { stream }
+let offscreenDocumentCreated = false;
 
 // Listen for extension icon click
 chrome.action.onClicked.addListener((tab) => {
@@ -13,7 +14,7 @@ chrome.action.onClicked.addListener((tab) => {
   chrome.tabs.sendMessage(tab.id, { action: 'toggle-overlay' });
 });
 
-// Handle messages from content scripts
+// Handle messages from content scripts and offscreen document
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   console.log('Background received message:', request);
 
@@ -39,10 +40,52 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     stopAudioCapture(sender.tab.id);
     sendResponse({ success: true });
   }
+  else if (request.action === 'transcript-result') {
+    // Forward transcript from offscreen to content script
+    forwardTranscriptToContentScript(request.data);
+    sendResponse({ success: true });
+  }
+  else if (request.action === 'recognition-error') {
+    // Forward error from offscreen to content script
+    forwardErrorToContentScript(request.error);
+    sendResponse({ success: true });
+  }
+  else if (request.action === 'offscreen-ready') {
+    console.log('Offscreen document is ready');
+    sendResponse({ success: true });
+  }
   else {
     sendResponse({ success: true });
   }
 });
+
+// Create offscreen document if needed
+async function setupOffscreenDocument() {
+  if (offscreenDocumentCreated) {
+    return;
+  }
+
+  // Check if offscreen document already exists
+  const existingContexts = await chrome.runtime.getContexts({
+    contextTypes: ['OFFSCREEN_DOCUMENT']
+  });
+
+  if (existingContexts.length > 0) {
+    console.log('Offscreen document already exists');
+    offscreenDocumentCreated = true;
+    return;
+  }
+
+  // Create offscreen document
+  await chrome.offscreen.createDocument({
+    url: 'offscreen.html',
+    reasons: ['USER_MEDIA'], // Using media streams
+    justification: 'Speech recognition for real-time transcription'
+  });
+
+  offscreenDocumentCreated = true;
+  console.log('✅ Offscreen document created');
+}
 
 // Start audio capture for a tab
 async function startAudioCapture(tabId) {
@@ -55,91 +98,37 @@ async function startAudioCapture(tabId) {
   }
 
   try {
-    // Capture tab audio
-    const stream = await chrome.tabCapture.capture({
-      audio: true,
-      video: false
-    });
+    // Ensure offscreen document exists
+    await setupOffscreenDocument();
 
-    if (!stream) {
-      throw new Error('Failed to capture tab audio');
-    }
+    // Capture tab audio
+    const stream = await new Promise((resolve, reject) => {
+      chrome.tabCapture.capture({
+        audio: true,
+        video: false
+      }, (stream) => {
+        if (chrome.runtime.lastError) {
+          reject(new Error(chrome.runtime.lastError.message));
+        } else if (!stream) {
+          reject(new Error('Failed to capture tab audio'));
+        } else {
+          resolve(stream);
+        }
+      });
+    });
 
     console.log('✅ Audio stream captured');
 
-    // Create Web Speech API recognizer
-    const recognition = new (window.webkitSpeechRecognition || window.SpeechRecognition)();
-    recognition.continuous = true;
-    recognition.interimResults = true;
-    recognition.lang = 'fr-FR'; // French language for negotiation
+    // Store stream
+    activeCaptures.set(tabId, { stream, tabId });
 
-    let lastTranscript = '';
-    let lastSpeaker = 'counterparty'; // Assume counterparty by default
+    // Send message to offscreen document to start recognition
+    await chrome.runtime.sendMessage({
+      action: 'start-recognition',
+      stream: stream.id
+    });
 
-    recognition.onresult = (event) => {
-      for (let i = event.resultIndex; i < event.results.length; i++) {
-        const transcript = event.results[i][0].transcript;
-        const isFinal = event.results[i].isFinal;
-        const confidence = event.results[i][0].confidence;
-
-        // Only send final results to avoid spam
-        if (isFinal && transcript.trim() !== lastTranscript.trim()) {
-          lastTranscript = transcript;
-
-          console.log('📝 Transcript:', transcript);
-
-          // Send transcript to content script
-          chrome.tabs.sendMessage(tabId, {
-            action: 'audio-transcript',
-            data: {
-              transcript: transcript,
-              speaker: lastSpeaker,
-              timestamp: Date.now() / 1000,
-              confidence: confidence,
-              isFinal: true
-            }
-          }).catch(err => {
-            console.error('Failed to send transcript to content script:', err);
-          });
-
-          // Alternate speaker assumption (simple heuristic)
-          // In reality, you'd need more sophisticated speaker detection
-          lastSpeaker = lastSpeaker === 'user' ? 'counterparty' : 'user';
-        }
-      }
-    };
-
-    recognition.onerror = (event) => {
-      console.error('Speech recognition error:', event.error);
-
-      // Notify content script of error
-      chrome.tabs.sendMessage(tabId, {
-        action: 'audio-error',
-        error: event.error
-      }).catch(() => {});
-    };
-
-    recognition.onend = () => {
-      console.log('Speech recognition ended');
-
-      // Auto-restart if still capturing
-      if (activeCaptures.has(tabId)) {
-        console.log('Restarting speech recognition...');
-        try {
-          recognition.start();
-        } catch (e) {
-          console.error('Failed to restart recognition:', e);
-        }
-      }
-    };
-
-    // Store capture state
-    activeCaptures.set(tabId, { stream, recognition });
-
-    // Start recognition
-    recognition.start();
-
-    console.log('✅ Speech recognition started');
+    console.log('✅ Speech recognition request sent to offscreen');
 
   } catch (error) {
     console.error('Error starting audio capture:', error);
@@ -148,15 +137,19 @@ async function startAudioCapture(tabId) {
 }
 
 // Stop audio capture for a tab
-function stopAudioCapture(tabId) {
+async function stopAudioCapture(tabId) {
   const capture = activeCaptures.get(tabId);
 
   if (capture) {
     console.log('Stopping audio capture for tab:', tabId);
 
-    // Stop recognition
-    if (capture.recognition) {
-      capture.recognition.stop();
+    // Stop offscreen recognition
+    try {
+      await chrome.runtime.sendMessage({
+        action: 'stop-recognition'
+      });
+    } catch (e) {
+      console.error('Error stopping recognition:', e);
     }
 
     // Stop stream
@@ -166,6 +159,29 @@ function stopAudioCapture(tabId) {
 
     activeCaptures.delete(tabId);
     console.log('✅ Audio capture stopped');
+  }
+}
+
+// Forward transcript from offscreen to content script
+function forwardTranscriptToContentScript(data) {
+  // Find the tab that has an active capture
+  for (const [tabId, capture] of activeCaptures.entries()) {
+    chrome.tabs.sendMessage(tabId, {
+      action: 'audio-transcript',
+      data: data
+    }).catch(err => {
+      console.error('Failed to send transcript to content script:', err);
+    });
+  }
+}
+
+// Forward error from offscreen to content script
+function forwardErrorToContentScript(error) {
+  for (const [tabId, capture] of activeCaptures.entries()) {
+    chrome.tabs.sendMessage(tabId, {
+      action: 'audio-error',
+      error: error
+    }).catch(() => {});
   }
 }
 
