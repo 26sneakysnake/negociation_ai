@@ -313,7 +313,10 @@ def main():
             # Restart script in venv
             print_info("Restarting in virtual environment...")
             venv_python = get_venv_python()
-            os.execv(str(venv_python), [str(venv_python), __file__])
+            # Use subprocess instead of execv to handle paths with spaces on Windows
+            script_path = Path(__file__).resolve()
+            subprocess.run([str(venv_python), str(script_path)], check=True)
+            sys.exit(0)
 
     # Check dependencies (should be installed in venv now)
     if not check_dependencies():
