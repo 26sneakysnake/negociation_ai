@@ -11,7 +11,8 @@
     "https://meet.google.com/*",
     "https://*.zoom.us/*",
     "https://teams.microsoft.com/*",
-    "http://localhost:8000/*"
+    "http://localhost:8000/*",
+    "http://localhost:*/*"
   ],
   "background": {
     "service_worker": "scripts/background.js"
@@ -21,7 +22,9 @@
       "matches": [
         "https://meet.google.com/*",
         "https://*.zoom.us/*",
-        "https://teams.microsoft.com/*"
+        "https://teams.microsoft.com/*",
+        "http://localhost:*/demo/*",
+        "file://*/demo/demo_call.html"
       ],
       "js": ["scripts/content.js"],
       "css": ["styles/overlay.css"],

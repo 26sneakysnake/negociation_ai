@@ -203,23 +203,18 @@ def start_backend():
             "--reload"
         ]
 
-        process = subprocess.Popen(
-            cmd,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            text=True
-        )
+        # Don't capture output - let it show in terminal
+        process = subprocess.Popen(cmd)
 
         # Wait a bit for startup
-        time.sleep(2)
+        time.sleep(3)
 
         if process.poll() is None:
             print_success("Backend running on http://localhost:8000")
             return process
         else:
-            stdout, stderr = process.communicate()
             print_error("Backend failed to start")
-            print(stderr)
+            print_error("Check the error messages above")
             return None
 
     except Exception as e:
@@ -347,8 +342,9 @@ def main():
         sys.exit(1)
 
     # Optional: start frontend
-    frontend_choice = input("\nStart frontend React app? (y/n): ")
-    if frontend_choice.lower() == 'y':
+    print(f"\n{Colors.BOLD}Start frontend React app?{Colors.ENDC}")
+    frontend_choice = input("Type 'y' for yes, or press Enter to skip: ").strip().lower()
+    if frontend_choice == 'y':
         frontend = start_frontend()
         if frontend:
             processes.append(('frontend', frontend))
