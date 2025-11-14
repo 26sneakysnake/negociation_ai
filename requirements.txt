@@ -5,7 +5,7 @@ python-multipart==0.0.6
 websockets==12.0
 
 # AI Services
-mistralai==0.1.2
+# mistralai==0.1.2  # Requires pyarrow/cmake compilation, use direct API calls instead
 elevenlabs==1.0.0
 qdrant-client==1.11.3
 
