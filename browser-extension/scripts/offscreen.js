@@ -17,7 +17,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   console.log('Offscreen received message:', message);
 
   if (message.action === 'start-recognition') {
-    startRecognition(message.stream)
+    startRecognition()
       .then(() => sendResponse({ success: true }))
       .catch(error => sendResponse({ success: false, error: error.message }));
     return true; // Will respond asynchronously
@@ -32,7 +32,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 });
 
 // Start speech recognition
-async function startRecognition(streamId) {
+async function startRecognition() {
   console.log('Starting speech recognition...');
 
   if (isRecognizing) {
@@ -44,6 +44,16 @@ async function startRecognition(streamId) {
     // Check if Speech Recognition is available
     if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
       throw new Error('Speech Recognition API not available');
+    }
+
+    // Get microphone access (needed to activate audio context)
+    // This captures the user's microphone to enable speech recognition
+    try {
+      mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      console.log('✅ Microphone access granted');
+    } catch (e) {
+      console.warn('Could not get microphone access:', e);
+      // Continue anyway, SpeechRecognition might work without it
     }
 
     // Create recognition instance

@@ -85,6 +85,10 @@ async function setupOffscreenDocument() {
 
   offscreenDocumentCreated = true;
   console.log('✅ Offscreen document created');
+
+  // Wait a bit for offscreen document to fully load
+  await new Promise(resolve => setTimeout(resolve, 500));
+  console.log('✅ Offscreen document ready');
 }
 
 // Start audio capture for a tab
@@ -123,9 +127,9 @@ async function startAudioCapture(tabId) {
     activeCaptures.set(tabId, { stream, tabId });
 
     // Send message to offscreen document to start recognition
+    // Note: We can't pass the MediaStream object, offscreen will use getUserMedia
     await chrome.runtime.sendMessage({
-      action: 'start-recognition',
-      stream: stream.id
+      action: 'start-recognition'
     });
 
     console.log('✅ Speech recognition request sent to offscreen');

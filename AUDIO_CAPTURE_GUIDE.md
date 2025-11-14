@@ -2,11 +2,17 @@
 
 ## ✅ Fonctionnalité Implémentée
 
-L'extension NegotiAI Coach peut maintenant **capturer et transcrire l'audio en temps réel depuis Google Meet**, y compris ce que dit votre interlocuteur.
+L'extension NegotiAI Coach peut maintenant **capturer et transcrire l'audio en temps réel depuis votre microphone** pendant un appel Google Meet.
+
+### ⚠️ Limitation Importante
+
+Pour des raisons de sécurité et de restrictions techniques de Chrome Manifest V3, l'extension capture actuellement **votre microphone** (ce que vous dites) plutôt que l'audio complet de l'onglet Google Meet (qui inclurait votre interlocuteur).
+
+**Cela signifie** : La transcription fonctionne pour vos propres paroles pendant la négociation. Les suggestions IA analysent ce que vous dites pour vous guider.
 
 ## 🔧 Technologies Utilisées
 
-1. **Chrome tabCapture API** : Capture l'audio de l'onglet Google Meet
+1. **getUserMedia API** : Capture l'audio depuis le microphone de l'utilisateur
 2. **Offscreen Document (Manifest V3)** : Permet l'accès aux Web APIs dans une extension
 3. **Web Speech API** : Transcription vocale automatique en français
 4. **WebSocket** : Envoi des transcriptions au backend pour analyse IA
@@ -14,20 +20,26 @@ L'extension NegotiAI Coach peut maintenant **capturer et transcrire l'audio en t
 ### Architecture Technique
 
 ```
-Background Service Worker (background.js)
-    ↓ crée
-Offscreen Document (offscreen.html + offscreen.js)
-    ↓ a accès à
-Web Speech API (SpeechRecognition)
-    ↓ transcrit
-Audio capturé via tabCapture
-    ↓ envoie
-Transcription → Background → Content Script → Overlay
+Microphone de l'utilisateur
+    ↓
+getUserMedia API (dans offscreen.js)
+    ↓
+Web Speech API (SpeechRecognition en français)
+    ↓
+Transcription en temps réel
+    ↓
+Offscreen Document → Background Service Worker
+    ↓
+Content Script (WebSocket)
+    ↓
+Backend FastAPI → AI Engine
+    ↓
+Suggestions affichées dans l'overlay
 ```
 
 **Pourquoi un Offscreen Document ?**
 
-Les service workers (background.js en Manifest V3) n'ont **pas accès** aux Web APIs comme `SpeechRecognition` ou l'objet `window`. L'offscreen document est une page HTML invisible qui tourne en arrière-plan et a accès à toutes les Web APIs.
+Les service workers (background.js en Manifest V3) n'ont **pas accès** aux Web APIs comme `SpeechRecognition`, `getUserMedia` ou l'objet `window`. L'offscreen document est une page HTML invisible qui tourne en arrière-plan et a accès à toutes les Web APIs nécessaires pour la capture audio et la transcription.
 
 ## 🚀 Comment Utiliser
 
@@ -82,11 +94,13 @@ Si ce n'est pas le cas :
 ## 🎯 Ce qui Se Passe en Arrière-Plan
 
 ```
-Google Meet Audio
+Votre Microphone
        ↓
-Chrome tabCapture API (background.js)
+getUserMedia (offscreen.js)
        ↓
 Web Speech API (transcription FR)
+       ↓
+Offscreen → Background (background.js)
        ↓
 Content Script (content.js)
        ↓
@@ -99,20 +113,19 @@ Overlay (affichage)
 
 ## 📝 Détection du Locuteur
 
-**Important** : La détection du locuteur utilise une heuristique simple :
-- Les phrases alternent entre "user" et "counterparty"
-- **Première phrase** = counterparty (votre interlocuteur)
-- **Deuxième phrase** = user (vous)
-- Et ainsi de suite...
+**Important** : Actuellement, l'extension capture **uniquement votre microphone**.
+- Toutes les transcriptions sont marquées comme "user" (vous)
+- L'analyse IA se base sur vos paroles pour générer des suggestions
 
-Cette détection n'est **pas parfaite** mais fonctionne pour la plupart des conversations alternées.
+**Pour une utilisation optimale** : Résumez verbalement ce que dit votre interlocuteur pour que l'IA comprenne le contexte. Par exemple : "Il propose 10,000 euros" ou "Elle dit que c'est son offre finale".
 
-### Amélioration Future
+### Améliorations Futures Possibles
 
-Pour une meilleure détection :
-- Analyse vocale avancée (timbre, fréquence)
-- Bouton manuel "C'est moi qui parle"
-- Machine learning pour identifier les voix
+Pour capturer l'audio complet de Google Meet (y compris l'interlocuteur) :
+- Développer une extension native (hors navigateur) avec accès système
+- Attendre que Chrome étende les permissions de tabCapture en Manifest V3
+- Utiliser une application de bureau complémentaire pour la capture audio
+- Bouton manuel pour marquer qui parle dans la conversation
 
 ## ⚠️ Limitations
 
