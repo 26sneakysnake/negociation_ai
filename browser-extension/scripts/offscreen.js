@@ -106,14 +106,23 @@ async function startRecognition() {
     recognition.onerror = (event) => {
       console.error('Speech recognition error:', event.error);
 
+      // Provide detailed error information
+      let errorMessage = event.error;
+      if (event.error === 'not-allowed') {
+        errorMessage = 'Microphone permission denied. Please allow microphone access in Chrome settings.';
+        console.error('PERMISSION DENIED: The microphone permission was blocked.');
+        console.error('SOLUTION: Go to chrome://settings/content/microphone and allow access.');
+        console.error('NOTE: If Google Meet is using the microphone, this might conflict.');
+      }
+
       // Send error to background
       chrome.runtime.sendMessage({
         action: 'recognition-error',
-        error: event.error
+        error: errorMessage
       }).catch(() => {});
 
       // Don't stop on network errors or no-speech
-      if (event.error === 'aborted' || event.error === 'audio-capture') {
+      if (event.error === 'aborted' || event.error === 'audio-capture' || event.error === 'not-allowed') {
         isRecognizing = false;
       }
     };
