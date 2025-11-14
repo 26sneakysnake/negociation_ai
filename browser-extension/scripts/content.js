@@ -19,6 +19,7 @@ let reconnectAttempts = 0;
 let sessionId = null;
 let isConnected = false;
 let simulationInterval = null;
+let isCapturingAudio = false;
 
 // Test phrases for simulation
 const TEST_PHRASES = [
@@ -66,8 +67,9 @@ function createOverlay() {
           <span class="negotiai-status-dot"></span>
           <span class="negotiai-status-text">Disconnected</span>
         </div>
-        <div style="display: flex; gap: 8px;">
+        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
           <button id="negotiai-connect" class="negotiai-btn-primary">Connect</button>
+          <button id="negotiai-start-audio" class="negotiai-btn-secondary" disabled>🎤 Start Audio</button>
           <button id="negotiai-simulate" class="negotiai-btn-secondary" disabled>Start Sim</button>
         </div>
       </div>
@@ -99,6 +101,7 @@ function setupEventListeners() {
   const toggleBtn = document.getElementById('negotiai-toggle');
   const closeBtn = document.getElementById('negotiai-close');
   const connectBtn = document.getElementById('negotiai-connect');
+  const startAudioBtn = document.getElementById('negotiai-start-audio');
   const simulateBtn = document.getElementById('negotiai-simulate');
   const overlay = document.getElementById('negotiai-overlay');
 
@@ -120,6 +123,16 @@ function setupEventListeners() {
         disconnect();
       } else {
         await connect();
+      }
+    });
+  }
+
+  if (startAudioBtn) {
+    startAudioBtn.addEventListener('click', () => {
+      if (isCapturingAudio) {
+        stopAudioCapture();
+      } else {
+        startAudioCapture();
       }
     });
   }
@@ -303,6 +316,12 @@ function connectWebSocket(sessId) {
 // Disconnect
 function disconnect() {
   stopSimulation();
+
+  // Stop audio capture if running
+  if (isCapturingAudio) {
+    stopAudioCapture();
+  }
+
   if (ws) {
     ws.close();
     ws = null;
@@ -511,6 +530,12 @@ function updateConnectButton(connected) {
     btn.textContent = connected ? 'Disconnect' : 'Connect';
     btn.className = connected ? 'negotiai-btn-danger' : 'negotiai-btn-primary';
   }
+
+  // Enable/disable audio button based on connection
+  const audioBtn = document.getElementById('negotiai-start-audio');
+  if (audioBtn) {
+    audioBtn.disabled = !connected;
+  }
 }
 
 // Update simulate button
@@ -545,13 +570,112 @@ if (document.readyState === 'loading') {
   createOverlay();
 }
 
-// Listen for messages from popup
+// Start real audio capture
+function startAudioCapture() {
+  if (!isConnected) {
+    showNotification('Connect to backend first!', 'warning');
+    return;
+  }
+
+  console.log('🎤 Starting audio capture...');
+
+  // Request background script to start capturing
+  chrome.runtime.sendMessage({ action: 'start-audio-capture' }, (response) => {
+    if (response && response.success) {
+      isCapturingAudio = true;
+      updateAudioButton(true);
+      showNotification('Audio capture started - listening to Google Meet', 'info');
+      console.log('✅ Audio capture started');
+    } else {
+      showNotification('Failed to start audio capture: ' + (response?.error || 'Unknown error'), 'error');
+      console.error('Failed to start audio capture:', response);
+    }
+  });
+}
+
+// Stop audio capture
+function stopAudioCapture() {
+  console.log('⏹️ Stopping audio capture...');
+
+  chrome.runtime.sendMessage({ action: 'stop-audio-capture' }, (response) => {
+    isCapturingAudio = false;
+    updateAudioButton(false);
+    showNotification('Audio capture stopped', 'info');
+    console.log('✅ Audio capture stopped');
+  });
+}
+
+// Update audio button state
+function updateAudioButton(capturing) {
+  const btn = document.getElementById('negotiai-start-audio');
+  if (btn) {
+    btn.textContent = capturing ? '🎤 Stop Audio' : '🎤 Start Audio';
+    btn.className = capturing ? 'negotiai-btn-danger' : 'negotiai-btn-secondary';
+  }
+}
+
+// Listen for messages from background script and popup
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.action === 'toggle-overlay') {
     const overlay = document.getElementById('negotiai-overlay');
     if (overlay) {
       overlay.style.display = overlay.style.display === 'none' ? 'block' : 'none';
     }
+    sendResponse({ success: true });
   }
-  sendResponse({ success: true });
+  else if (request.action === 'audio-transcript') {
+    // Received transcript from background script
+    handleAudioTranscript(request.data);
+    sendResponse({ success: true });
+  }
+  else if (request.action === 'audio-error') {
+    console.error('Audio capture error:', request.error);
+    showNotification('Audio error: ' + request.error, 'error');
+
+    // Stop capture on error
+    if (isCapturingAudio) {
+      isCapturingAudio = false;
+      updateAudioButton(false);
+    }
+    sendResponse({ success: true });
+  }
+  else {
+    sendResponse({ success: true });
+  }
 });
+
+// Handle audio transcript from background script
+function handleAudioTranscript(data) {
+  console.log('📝 Received audio transcript:', data);
+
+  // Create transcript object for backend
+  const transcript = {
+    transcript: data.transcript,
+    speaker: data.speaker,
+    timestamp: data.timestamp,
+    emotion: 'neutral', // Could be enhanced with emotion detection
+    confidence_level: data.confidence || 0.8,
+    conversation_phase: 'negotiation',
+    detected_patterns: [],
+    manipulation_score: 0,
+    opportunity_score: 0,
+    hesitation_markers: [],
+    power_dynamics: 0.5,
+    stalemate_risk: 0.3,
+    session_id: sessionId
+  };
+
+  // Display transcript locally
+  displayTranscript(transcript);
+
+  // Send to backend if WebSocket is connected
+  if (ws && ws.readyState === WebSocket.OPEN) {
+    ws.send(JSON.stringify({
+      type: 'transcript',
+      data: transcript
+    }));
+    console.log('📤 Sent transcript to backend');
+  } else {
+    console.warn('WebSocket not connected, cannot send transcript');
+  }
+}

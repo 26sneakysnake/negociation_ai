@@ -5,7 +5,9 @@
   "description": "Real-time AI negotiation suggestions overlaid on your video calls",
   "permissions": [
     "activeTab",
-    "storage"
+    "storage",
+    "tabCapture",
+    "scripting"
   ],
   "host_permissions": [
     "https://meet.google.com/*",
